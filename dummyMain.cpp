@@ -19,7 +19,7 @@ using namespace std;
 
 int main()
 {
-	int sockfd;
+	int sockfd, clientfd;
 	struct sockaddr_in self;
 	char buffer[MAXBUF];
 
@@ -51,7 +51,6 @@ int main()
 
 	while (1)
     {
-		int clientfd;
 		struct sockaddr_in client;
 		int addrlen = sizeof(client);
 		
@@ -66,13 +65,14 @@ int main()
 	
 		// have something
 		if (bytesReceived) {
-			//cout << "anything?" << endl;
-			int val = atoi(buffer);			// assuming input is just a string consisting of a 2 digit integer
-			int a = val / 10;				// first digit
-			int b = val % 10;				// second digit
+			// assuming input is just a string consisting of a 2 digit integer
+            //int val = atoi(buffer);
+			//int a = val / 10;				// first digit
+			//int b = val % 10;				// second digit
+            cout << "Read " << bytesReceived << " bytes." << endl;
+            buffer[bytesReceived] = '\0';
 			
-            cout << "a = " << a << endl;
-            cout << "b = " << b << endl;
+            cout << "buffer: " << buffer << endl;
 		}
 		const char *msg = "success";
 		send(clientfd,msg,strlen(msg),0);
