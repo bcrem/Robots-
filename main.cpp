@@ -1,6 +1,6 @@
 #include <iostream>
-#include "Matrix.h"
-#include "Jointset.h"
+//#include "Matrix.h"
+//#include "Jointset.h"
 #include "labvolt.h"
 #include <cmath>
 #include <unistd.h>
@@ -17,6 +17,11 @@
 
 using namespace std;
 
+void armMove(char*, int);
+void armOpen();
+void armClose();
+
+/*
 void moveToJointAngles(Jointset desired);
 void moveToPointXYZ(Point desired);
 void PieceToNode(int a, int b);
@@ -43,6 +48,7 @@ Point Pieces[23] = {Point(22.0,-23.0,2.0), Point(22.0,-18.0,2.0),
 					Point(-5.5,-27.5,2.0), Point(-5.5,-22.5,3.0), Point(-5.5,-17.0,3.0),
 					Point(-10.5,-27.5,2.0), Point(-10.5,-22.5,2.5), Point(-10.5,-17.0,3.0)
 					};
+*/
 
 
 
@@ -84,8 +90,8 @@ int main()
 		return errno;
 	}
 
-	Jointset tmp(0, 130, 135, 0, 0);
-	current = tmp;
+	//Jointset tmp(0, 130, 135, 0, 0);
+	//current = tmp;
 	
 	while (1)
     {
@@ -100,101 +106,58 @@ int main()
 		        ntohs(client.sin_port));
 		
 		int bytesReceived = recv(clientfd, buffer, MAXBUF, 0);
-	//	printf ("Received %lu bytes.\n", (unsigned long int) bytesReceived);
 	
 		// have something
-		if (bytesReceived) {
-			//cout << "anything?" << endl;
-			int val = atoi(buffer);			// assuming input is just a string consisting of a 2 digit integer
-			int a = val / 10;				// first digit
-			int b = val % 10;				// second digit
+		if (bytesReceived)
+        {
+            cout << "Read " << bytesReceived << " bytes." << endl;
+            buffer[bytesReceived] = '\0';
 			
-			PieceToNode(a,b);
+            cout << "buffer: " << buffer << endl;
+
+            //  Extract command from buffer
+            switch (buffer[0])
+            {
+                case 'M':
+                    armMove(buffer, bytesReceived);
+                    break;
+
+                case 'O':
+                    armOpen();
+                    break;
+
+                case 'C':
+                    armClose();
+                    break;
+            }
 		}
+
 		const char *msg = "success";
 		send(clientfd,msg,strlen(msg),0);
-#if 0		
-		int a,b;
-		cout << "Enter a node (#,#): ";
-		cin >> a >> b;
-		PieceToNode(a,b);
-		cout << piece << endl;
-#endif		
-//		close(clientfd);
+
+  		close(clientfd);
 	}
 	
-//	shutoff();
+
 	return 0;
 }
 
-void moveToJointAngles(Jointset desired)
-{
-	Jointset move = desired - current;
 
-	// converts theta 1 to steps, + = CCW
-	double base = move.angles[0] * 6500. / 360.;
-	// converts theta 2 to steps, + = up/back
-	double shoulder = move.angles[1] * 8600. / 360.;
-	// converts theta 3 to steps, + = down, dependent on shoulder
-	double elbow = move.angles[2] * 8600. / 360 - shoulder;
-	// +M4 and -M5 pitches wrist down
-	double M4 = move.angles[3] * 6500. / 360. +
-                move.angles[4] * 6500. / 360. +
-                elbow*6500/8600 - base;
-	// +M4 and +M5 rolls wrist right
-	double M5 = -move.angles[3] * 6500. / 360. +
-                move.angles[4] * 6500. / 360. -
-                elbow*6500/8600 - base;
-	
-  	moverel(base,shoulder,elbow,M4,M5);
-	
-	current = desired;
+void armMove(char *buf, int msgSize)
+{
+    cout << "Received \"" << buf << "\"" << endl;
 }
 
-void moveToPointXYZ(Point desired)
-{
-    // matrix representing position and orientation (gripper down)
-	double tmp[4][4] = {{-1., 0., 0., desired.x},
-			    {0., 1., 0.,  desired.y},
-			    {0., 0., -1., desired.z},
-			    {0., 0., 0., 1}};
 
-	Matrix x(tmp);
-    
-    // calculate angles to move based on that matrix
-	Jointset anglesMove = inverseKin(x);
-	moveToJointAngles(anglesMove);	// move to new position
+void armOpen()
+{
+    cout << "Opening gripper..." << endl;
+    gripperOpen();
 }
 
-void PieceToNode(int a, int b)
+
+void armClose()
 {
-    cout << "PieceToNode():  Moving stone to (" << a << ","
-         << b << ")" << endl;
-
-	// Claw starts open
-	// Go to above the piece to pick up
-	Point abovePiece = Pieces[piece];
-	abovePiece.z += 5.0;
-	moveToPointXYZ(abovePiece);
-	
-	// Go to the piece and close claw
-	Point tmp = Pieces[piece++];
-	moveToPointXYZ(tmp);
-	gripperClose();
-	
-	// Go back up, and over to above the node
-	moveToPointXYZ(abovePiece);
-	tmp = Board[a][b];
-	tmp.z += 5.0;
-	moveToPointXYZ(tmp);
-	
-	// Go to node and release piece and go back up
-	moveToPointXYZ(Board[a][b]);
-
-	gripperOpen();
-	moveToPointXYZ(tmp);
-	
-	// Move arm out of the way and open gripper more
-	moveToPointXYZ(abovePiece);
-	gripperOpen();
+    cout << "Closing gripper..." << endl;
+    gripperClose();
 }

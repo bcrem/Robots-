@@ -13,6 +13,9 @@
 
 using namespace std;
 
+void armMove(char*, int);
+void armOpen();
+void armClose();
 
 #define MY_PORT		9998
 #define MAXBUF		1024
@@ -61,18 +64,31 @@ int main()
 		        ntohs(client.sin_port));
 		
 		int bytesReceived = recv(clientfd, buffer, MAXBUF, 0);
-	//	printf ("Received %lu bytes.\n", (unsigned long int) bytesReceived);
 	
 		// have something
-		if (bytesReceived) {
-			// assuming input is just a string consisting of a 2 digit integer
-            //int val = atoi(buffer);
-			//int a = val / 10;				// first digit
-			//int b = val % 10;				// second digit
+		if (bytesReceived)
+        {
             cout << "Read " << bytesReceived << " bytes." << endl;
             buffer[bytesReceived] = '\0';
 			
             cout << "buffer: " << buffer << endl;
+
+            //  Extract command from buffer
+            switch (buffer[0])
+            {
+                case 'M':
+                    armMove(buffer, bytesReceived);
+                    break;
+
+                case 'O':
+                    armOpen();
+                    break;
+
+                case 'C':
+                    armClose();
+                    break;
+
+            }
 		}
 		const char *msg = "success";
 		send(clientfd,msg,strlen(msg),0);
@@ -81,4 +97,22 @@ int main()
     close(clientfd);
 
 	return 0;
+}
+
+
+void armMove(char *buf, int msgSize)
+{
+    cout << "Received \"" << buf << "\"" << endl;
+}
+
+
+void armOpen()
+{
+    cout << "Opening gripper..." << endl;
+}
+
+
+void armClose()
+{
+    cout << "Closing gripper..." << endl;
 }
