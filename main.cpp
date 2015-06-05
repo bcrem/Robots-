@@ -20,6 +20,7 @@ using namespace std;
 void armMove(char*, int);
 void armOpen();
 void armClose();
+void armNest();
 void armShutdown();
 
 void moveToJointAngles(Jointset desired);
@@ -27,31 +28,6 @@ void moveToPointXYZ(Point desired);
 
 Jointset current;
 int piece = 0;
-
-/*
-void PieceToNode(int a, int b);
-
-Point Board[9][9] = {{Point(9.00,-10.0,5.0), Point(8.50,-7.5,5.0), Point(8.50,-5.0,5.0), Point(8.00,-2.5,5.0), Point(8.00,0.0,5.0), Point(8.00,2.5,5.0), Point(8.00,5.0,5.0), Point(8.00,7.5,5.0), Point(8.50,10.5,5.0)},
-   					 {Point(12.0,-11.0,4.5), Point(12.0,-8.0,4.5), Point(11.5,-5.0,4.5), Point(11.5,-2.5,4.5), Point(11.5,0.0,4.5), Point(11.5,2.5,4.5), Point(11.5,5.5,4.5), Point(11.5,8.5,4.5), Point(11.5,11.0,4.0)},
-					 {Point(15.0,-11.5,4.0), Point(15.0,-8.5,4.0), Point(15.0,-5.0,4.0), Point(14.5,-2.5,4.5), Point(14.5,0.0,4.0), Point(14.5,3.0,4.0), Point(14.5,5.5,4.0), Point(14.5,8.5,4.0), Point(15.0,11.5,4.0)},
-					 {Point(18.0,-11.5,4.0), Point(18.0,-8.5,4.0), Point(18.0,-5.5,4.0), Point(18.0,-2.5,4.0), Point(18.0,0.0,4.0), Point(18.0,3.0,4.0), Point(18.0,5.5,4.0), Point(18.0,8.5,4.0), Point(18.0,11.5,4.0)},
-					 {Point(21.0,-11.5,4.0), Point(21.0,-8.5,4.0), Point(21.0,-5.5,4.0), Point(21.0,-2.5,4.0), Point(21.0,0.0,4.0), Point(21.0,3.0,4.0), Point(21.0,6.0,4.0), Point(21.0,8.5,4.0), Point(21.0,12.0,4.0)},
-					 {Point(25.0,-12.0,3.5), Point(25.0,-9.0,3.5), Point(25.0,-5.5,3.5), Point(25.0,-2.5,3.5), Point(24.5,0.0,3.5), Point(25.0,3.5,3.5), Point(25.0,6.0,3.5), Point(25.0,9.0,3.5), Point(24.5,12.5,3.5)},
-					 {Point(28.0,-12.0,3.5), Point(28.0,-9.0,3.5), Point(28.0,-5.5,3.5), Point(28.0,-2.5,3.5), Point(28.0,0.0,3.5), Point(28.0,3.0,3.5), Point(28.0,6.0,3.5), Point(28.0,9.0,3.5), Point(28.0,12.0,3.5)},
-					 {Point(31.0,-12.0,3.5), Point(31.0,-9.0,3.5), Point(31.0,-6.0,3.5), Point(31.0,-3.0,3.5), Point(31.0,0.0,3.5), Point(31.0,3.0,3.5), Point(31.0,6.0,3.5), Point(31.0,9.0,3.5), Point(31.0,12.0,3.5)},
-					 {Point(35.0,-12.0,3.5), Point(34.0,-9.0,3.5), Point(34.0,-6.0,3.5), Point(34.0,-3.0,3.5), Point(34.0,0.0,3.5), Point(34.0,3.0,3.5), Point(34.0,6.0,3.5), Point(34.0,9.0,3.5), Point(34.0,12.0,3.5)}};
-
-Point Pieces[23] = {Point(22.0,-23.0,2.0), Point(22.0,-18.0,2.0),
-					Point(18.0,-28.0,2.0), Point(17.0,-23.0,2.0), Point(17.0,-17.5,2.0),
-					Point(13.0,-28.0,2.0), Point(12.5,-22.5,2.5), Point(12.0,-17.5,3.0), 
-					Point(8.25,-27.5,2.0), Point(8.0,-22.5,2.5),  Point(7.5,-17.0,3.0), 
-					Point(3.5,-27.5,2.0),  Point(3.25,-22.5,2.5), Point(3.25,-17.0,3.0),
-					Point(-1.0,-27.5,2.0), Point(-1.0,-22.5,2.5), Point(-1.0,-17.0,3.0),
-					Point(-5.5,-27.5,2.0), Point(-5.5,-22.5,3.0), Point(-5.5,-17.0,3.0),
-					Point(-10.5,-27.5,2.0), Point(-10.5,-22.5,2.5), Point(-10.5,-17.0,3.0)
-					};
-*/
-
 
 
 #define MY_PORT		9998
@@ -62,6 +38,7 @@ Point Pieces[23] = {Point(22.0,-23.0,2.0), Point(22.0,-18.0,2.0),
 
 
 bool armFlag = TRUE;  //  Assume we're plugged into an arm.
+bool initFlag = FALSE;  //  Call init() unless told otherwise
 
 int main(int argc, char** argv)
 {
@@ -71,11 +48,31 @@ int main(int argc, char** argv)
 
     if ( argc > 1 )
     {
-        armFlag = FALSE;
+        if (*argv[1] == 'd')
+        {
+            armFlag = FALSE;
+
+            cout << "********************" << endl
+                 << "***  DUMMY MODE  ***" << endl
+                 << "********************" << endl;
+        }
+
+        if (*argv[1] == 'q')
+        {
+            initFlag = TRUE;
+
+            cout << "*************************" << endl
+                 << "***  QUICK-INIT MODE  ***" << endl
+                 << "*************************" << endl;
+        }
     }
 
 
-    if (armFlag) init();
+    if (initFlag)
+        quickInit1();
+    else if (armFlag)
+        init();
+
     if (armFlag) zero();
 	
 	// Create streaming socket
@@ -144,6 +141,15 @@ int main(int argc, char** argv)
                     armClose();
                     break;
 
+                case 'I':
+                    cout << "Initializing..." << endl;
+                    if (armFlag) init();
+                    break;
+
+                case 'N':
+                    armNest();
+                    break;
+
                 case 'S':
                     armShutdown();
                     break;
@@ -161,14 +167,21 @@ int main(int argc, char** argv)
 }
 
 
-void armMove(char *msg, int msgSize)
+void armMove(char *buf, int msgSize)
 {
-    cout << "armMove(): Received \"" << msg << "\"" << endl;
+    float x,y,z;
+
+    x = atof(strtok ((buf+2),","));
+    y = atof(strtok (NULL,","));
+    z = atof(strtok (NULL,","));
+
+    printf("armMove(): Moving to Point(%f, %f, %f)\n", x,y,z);
 
     //  Extract x-y-z coords from msg.
     if (armFlag)
     {
-        ;
+
+        moveToPointXYZ(Point(x,y,z));
     }
 }
 
@@ -184,6 +197,13 @@ void armClose()
 {
     cout << "Closing gripper..." << endl;
     if (armFlag) gripperClose();
+}
+
+
+void armNest()
+{
+    cout << "Returning arm to current 'home'..." << endl;
+    if (armFlag) nest();
 }
 
 
