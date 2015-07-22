@@ -144,10 +144,12 @@ int main(int argc, char** argv)
                 case 'I':
                     cout << "Initializing..." << endl;
                     if (armFlag) init();
+                    current = tmp;
                     break;
 
                 case 'N':
                     armNest();
+                    current = tmp;
                     break;
 
                 case 'S':
@@ -171,13 +173,13 @@ void armMove(char *buf, int msgSize)
 {
     float x,y,z;
 
+    //  Extract x-y-z coords from msg.
     x = atof(strtok ((buf+2),","));
     y = atof(strtok (NULL,","));
     z = atof(strtok (NULL,","));
 
     printf("armMove(): Moving to Point(%f, %f, %f)\n", x,y,z);
 
-    //  Extract x-y-z coords from msg.
     if (armFlag)
     {
 
