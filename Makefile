@@ -12,15 +12,15 @@ LIBSDIR=-L./
 LIBS=${LIBSDIR} -lstdc++ -llabvolt -ludev
 
 
-armServer:	$(OBJS)
-	${CXX} ${CFLAGS} -o armServer ${OBJS} ${INC} ${LIBS}
+armDriver:	$(OBJS)
+	${CXX} ${CFLAGS} -o armDriver ${OBJS} ${INC} ${LIBS}
 
 Matrix.o: Matrix.h Point.h Jointset.h
 
 Jointset.o: Jointset.h
 	$(CXX) -c -o Jointset.o Jointset.cpp $(LIBS)
 
-all:	armServer
+all:	armDriver
 	
 clean:
-	rm -rf *~ $(OBJS) armServer
+	rm -rf *~ $(OBJS) armDriver
